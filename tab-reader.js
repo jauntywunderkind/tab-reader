@@ -21,9 +21,8 @@ export async function readFile( ...opt){
 	}
 }
 
-export async function main( opt){
+export function syncedTabs( file){
 	const
-		file= await readFile( opt),
 		mhtml= new FastMHtml.Parser({ }),
 		syncedTabs= mhtml
 			.parse( file)
@@ -32,16 +31,51 @@ export async function main( opt){
 	if( syncedTabs.length!== 1){
 		throw new Error( "syncedTabs file not found")
 	}
+	return new JSDOM( syncedTabs[ 0].content)
+}
+
+const
+	Frag= JSDOM.fragment( "<div/>").constructor,
+	_map= Array.prototype.map
+
+export function descend( el, selector, opt= {}){
+	function err( desc="not found"){
+		return new Error( `Selection '${selector}' ${desc}`)
+	}
+
+	let selection= el.querySelectorAll( selector)
+	// winnow down to things inside the template
+	if( opt.shadow!== false){
+		// pick the content of these elements
+		selection= _map.call( selection, i=> i.content)
+			.filter( i=> i.constructor.name=== "DocumentFragment")
+	}
+	// check count
+	if( selection.length=== 0){
+		if( opt.empty){
+			return []
+		}
+		// nothing here, throw
+		throw new err( "had no results")
+	}else if( !opt.multi){
+		if( selection.length!== 1){
+			throw new err( "had too many results")
+		}
+		// normal path, pick this one expected item out
+		selection= selection[ 0]
+	}
+	// return selection
+	return selection
+}
+
+export async function main( opt){
 	const
-		text= syncedTabs[ 0].content,
-		dom= new JSDOM( text),
-		app= dom.window.document.body.querySelector("history-app")
-	if( !app){
-		throw new Error( "History not found")
-	}
-	if( app.children.length!== 1|| app.children[ 0].tagName!== "TEMPLATE"){
-		throw new Error( "Template not found")
-	}
+		file= await readFile( opt),
+		dom= syncedTabs( file)
+	let cursor= dom.window.document.body
+	cursor= descend( cursor, "history-app template")
+	cursor= descend( cursor, "history-synced-device-manager template")
+	cursor= descend( cursor, "history-synced-device-card template", { multi: true})
 	return dom
 }
 export {
