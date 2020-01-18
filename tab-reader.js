@@ -73,12 +73,18 @@ export function selectCards( body){
 	cursor= descend( cursor, "history-app template")
 	cursor= descend( cursor, "history-synced-device-manager template")
 	cursor= descend( cursor, "history-synced-device-card template", { multi: true})
+	return cursor
 }
 
-
 export function DeviceCard( el){
-	const name= el.querySelector( "#device-name")
-	const tabs= el.querySelectorAll( "")
+	const
+		name= el.querySelector( "#device-name"),
+		tabs= _map.call( el.querySelectorAll( "a.website-link"), function( el){
+			return {
+				href: el.attributes.href.value,
+				title: el.querySelector( ".website-title").innerHTML
+			}
+		})
 	return {
 		name,
 		tabs
@@ -91,7 +97,7 @@ export async function main( opt){
 		dom= syncedTabs( file),
 		cardDoms= selectCards( dom.window.document.body),
 		cards= cardDoms.map( DeviceCard)
-	return dom
+	return cards
 }
 export {
 	main as default,
@@ -99,5 +105,5 @@ export {
 }
 
 if( typeof process!== "undefined"&& `file://${process.argv[ 1]}`=== import.meta.url){
-	main()
+	main().then( cards=> console.log( JSON.stringify( cards, null, "\t")))
 }
