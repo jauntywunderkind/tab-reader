@@ -23,11 +23,26 @@ export async function readFile( ...opt){
 
 export async function main( opt){
 	const
-		text= await readFile( opt),
-		mhtml= new FastMHtml.Parser({ })
-	mhtml.parse( text)
-	console.log(mhtml.spit().map( i=> i.filename))
-	return mhtml
+		file= await readFile( opt),
+		mhtml= new FastMHtml.Parser({ }),
+		syncedTabs= mhtml
+			.parse( file)
+			.spit()
+			.filter( i=> i.filename.endsWith( "syncedTabs"))
+	if( syncedTabs.length!== 1){
+		throw new Error( "syncedTabs file not found")
+	}
+	const
+		text= syncedTabs[ 0].content,
+		dom= new JSDOM( text),
+		app= dom.window.document.body.querySelector("history-app")
+	if( !app){
+		throw new Error( "History not found")
+	}
+	if( app.children.length!== 1|| app.children[ 0].tagName!== "TEMPLATE"){
+		throw new Error( "Template not found")
+	}
+	return dom
 }
 export {
 	main as default,
