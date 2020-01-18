@@ -68,14 +68,29 @@ export function descend( el, selector, opt= {}){
 	return selection
 }
 
-export async function main( opt){
-	const
-		file= await readFile( opt),
-		dom= syncedTabs( file)
-	let cursor= dom.window.document.body
+export function selectCards( body){
+	let cursor= body
 	cursor= descend( cursor, "history-app template")
 	cursor= descend( cursor, "history-synced-device-manager template")
 	cursor= descend( cursor, "history-synced-device-card template", { multi: true})
+}
+
+
+export function DeviceCard( el){
+	const name= el.querySelector( "#device-name")
+	const tabs= el.querySelectorAll( "")
+	return {
+		name,
+		tabs
+	}
+}
+
+export async function main( opt){
+	const
+		file= await readFile( opt),
+		dom= syncedTabs( file),
+		cardDoms= selectCards( dom.window.document.body),
+		cards= cardDoms.map( DeviceCard)
 	return dom
 }
 export {
