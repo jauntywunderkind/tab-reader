@@ -78,7 +78,7 @@ export function selectCards( body){
 
 export function DeviceCard( el){
 	const
-		name= el.querySelector( "#device-name"),
+		name= el.querySelector( "#device-name").innerHTML.trim(),
 		tabs= _map.call( el.querySelectorAll( "a.website-link"), function( el){
 			return {
 				href: el.attributes.href.value,
